@@ -1,5 +1,7 @@
 local script_to_run = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/pepsieds/Kohau/refs/heads/main/autofarms/point-farm.luau"))()]]
 
+wait(2)
+
 if syn and syn.queue_on_teleport then
 	syn.queue_on_teleport(script_to_run)
 elseif queue_on_teleport then
