@@ -78,8 +78,6 @@ local function EquipAllCoffee()
 	end
 end
 
--- FIX: Use game:HttpGet instead of HttpService:GetAsync so the executor
--- can properly intercept and make the HTTP call
 local function GetServers(cursor)
 	local url = "https://games.roblox.com/v1/games/"..PLACE_ID.."/servers/Public?sortOrder=Asc&limit=100"
 	if cursor then
@@ -136,8 +134,6 @@ local function HopToLowest()
 	end
 end
 
--- FIX: Find executive team by name instead of index so team order doesn't matter.
--- Also renamed to accurately reflect what it returns (a count, not a boolean).
 local function GetExecutiveCount()
 	for _, team in ipairs(Teams:GetTeams()) do
 		if team.Name == "🌸 Executives" then
