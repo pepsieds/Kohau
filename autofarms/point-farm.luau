@@ -11,6 +11,7 @@ end
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local Players = game:GetService('Players')
 local HttpService = game:GetService('HttpService')
+local Teams = game:GetService("Teams")
 
 local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
@@ -33,13 +34,9 @@ local CookingFolder = ProgrammedHolder:FindFirstChild('Cooking')
 local TeleportService = game:GetService("TeleportService")
 
 local PLACE_ID = game.PlaceId
-
 local wt = 0.1
 
 local fridge = nil
-
-local Teams = game:GetService("Teams")
-
 local CanFarm = true
 
 local function SetUpScript()
@@ -136,22 +133,59 @@ local function HopToLowest()
 	end
 end
 
+local Players = game:GetService("Players")
+local Teams = game:GetService("Teams")
+
+local EXECUTIVE_TEAM_NAME = "🌸 Executives"
+local CanFarm = true
+
+local function GetExecutiveTeam()
+	return Teams:FindFirstChild(EXECUTIVE_TEAM_NAME)
+end
+
 local function GetExecutiveCount()
-	for _, team in ipairs(Teams:GetTeams()) do
-		if team.Name == "🌸 Executives" then
-			return #team:GetPlayers()
-		end
+	local team = GetExecutiveTeam()
+	if not team then
+		warn("Executives team not found")
+		return 0
 	end
-	warn("Executives team not found")
-	return 0
+
+	return #team:GetPlayers()
 end
 
-if GetExecutiveCount() ~= 0 then
-	HopToLowest()
-	return
+local function UpdateCanFarm()
+	CanFarm = GetExecutiveCount() == 0
+
+	if CanFarm then
+		print("No executives found, loop resumed.")
+	else
+		print("Executive found, loop paused.")
+	end
 end
 
-wait(2)
+local function WatchPlayer(player)
+	player:GetPropertyChangedSignal("Team"):Connect(UpdateCanFarm)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+	WatchPlayer(player)
+end
+
+Players.PlayerAdded:Connect(function(player)
+	WatchPlayer(player)
+	task.defer(UpdateCanFarm)
+end)
+
+Players.PlayerRemoving:Connect(function()
+	task.defer(UpdateCanFarm)
+end)
+
+local function WaitUntilCanFarm()
+	while not CanFarm do
+		task.wait(1)
+		UpdateCanFarm()
+	end
+end
 
 local function GetDrink()
 
@@ -239,6 +273,13 @@ local function CheckPlayerCount()
 	end
 end
 
+if GetExecutiveCount() ~= 0 then
+	HopToLowest()
+	return
+end
+
+wait(2)
+
 SetUpScript()
 
 repeat wait() until fridge ~= nil
@@ -260,9 +301,7 @@ task.spawn(function()
 	while true do
 		task.wait(wt)
 
-		if GetExecutiveCount() ~= 0 then
-			HopToLowest()
-		end
+		WaitUntilCanFarm()
 
 		GetDrink()
 		EquipAllCoffee()
